@@ -1,8 +1,10 @@
-# User Authentication System
+# Task 01 – Full-Stack User Authentication System
 
 ![Live Preview](Secure-User-Authentication.png)
 
-A comprehensive user authentication system built with Express.js, MongoDB, and vanilla JavaScript. Features secure registration, login, session management, and role-based access control.
+## Task Overview
+
+Task 01 A comprehensive user authentication system built with Express.js, MongoDB, and vanilla JavaScript. Features secure registration, login, session management, and role-based access control.
 
 ## Features
 
@@ -197,3 +199,9 @@ The User model includes:
 ## License
 
 This project is licensed under the MIT License.
+
+---
+
+🎓 Internship Program Prodigy InfoTech  
+📅 Task 01 – Full-Stack User Authentication System
+🚀 Intern Momen Kelany

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Authentication System</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-brand">
+                <h1><a href="/">AuthSystem</a></h1>
+            </div>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/dashboard" class="nav-link">Dashboard</a>
+                <a href="/admin" class="nav-link active">Admin</a>
+                <button class="nav-link btn-logout" id="logoutBtn">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="admin-main">
+        <div class="container">
+            <div class="admin-header">
+                <h1>Admin Panel</h1>
+                <p class="admin-subtitle">System administration and user management</p>
+            </div>
+
+            <div class="admin-loading" id="adminLoading">
+                <div class="loader"></div>
+                <p>Loading admin panel...</p>
+            </div>
+
+            <div class="admin-content" id="adminContent" style="display: none;">
+                <div class="admin-stats">
+                    <h3>System Statistics</h3>
+                    <div class="stats-grid" id="systemStats">
+                        <!-- Stats will be loaded here -->
+                    </div>
+                </div>
+
+                <div class="admin-users">
+                    <h3>Recent Users</h3>
+                    <div class="users-table-container">
+                        <table class="users-table" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Last Login</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <!-- Users will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-error" id="adminError" style="display: none;">
+                <h3>Access Denied</h3>
+                <p>You need administrator privileges to access this page.</p>
+                <a href="/dashboard" class="btn btn-primary">Go to Dashboard</a>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initNavigation();
+            loadAdminData();
+        });
+
+        async function loadAdminData() {
+            const loadingDiv = document.getElementById('adminLoading');
+            const contentDiv = document.getElementById('adminContent');
+            const errorDiv = document.getElementById('adminError');
+
+            try {
+                const response = await fetch('/api/protected/admin');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Hide loading, show content
+                    loadingDiv.style.display = 'none';
+                    contentDiv.style.display = 'block';
+                    
+                    // Load statistics
+                    loadSystemStats(data.stats);
+                    
+                    // Load users table
+                    loadUsersTable(data.users);
+                    
+                } else if (response.status === 401 || response.status === 403) {
+                    // Not authorized
+                    loadingDiv.style.display = 'none';
+                    errorDiv.style.display = 'block';
+                } else {
+                    throw new Error('Failed to load admin data');
+                }
+            } catch (error) {
+                console.error('Error loading admin data:', error);
+                loadingDiv.style.display = 'none';
+                errorDiv.style.display = 'block';
+                errorDiv.innerHTML = `
+                    <h3>Error</h3>
+                    <p>Failed to load admin panel. Please try again.</p>
+                    <button class="btn btn-primary" onclick="location.reload()">Retry</button>
+                `;
+            }
+        }
+
+        function loadSystemStats(stats) {
+            const statsContainer = document.getElementById('systemStats');
+            
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${stats.totalUsers}</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.activeUsers}</div>
+                    <div class="stat-label">Active Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.adminUsers}</div>
+                    <div class="stat-label">Administrators</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.recentUsers}</div>
+                    <div class="stat-label">New Today</div>
+                </div>
+            `;
+        }
+
+        function loadUsersTable(users) {
+            const tableBody = document.getElementById('usersTableBody');
+            
+            if (users.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="no-data">No users found</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tableBody.innerHTML = users.map(user => `
+                <tr>
+                    <td>${user.username}</td>
+                    <td>${user.email}</td>
+                    <td>
+                        <span class="role-badge role-${user.role}">${user.role}</span>
+                    </td>
+                    <td>
+                        <span class="status-badge status-${user.isActive ? 'active' : 'inactive'}">
+                            ${user.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                    </td>
+                    <td>${formatDate(user.createdAt)}</td>
+                    <td>${user.lastLogin ? formatDate(user.lastLogin) : 'Never'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+    </script>
+</body>
+</html>
